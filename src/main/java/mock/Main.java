@@ -15,6 +15,26 @@ public class Main {
 
         TestClass testInstance = new TestClass();
         SuperMock.initMocks(testInstance);
+
+        SomeClassToMock mockedClass = SuperMock.mock(SomeClassToMock.class);
+        SuperMock.when(mockedClass.methodReturningValue()).thenReturn("Mocked Result");
+        System.out.println(mockedClass.methodReturningValue());
+
+        SomeClassToMock anotherMockedClass = SuperMock.mock(SomeClassToMock.class);
+
+        SuperMock.when(anotherMockedClass).thenThrow(new RuntimeException("Exception from mock"));
+
+        try {
+            anotherMockedClass.method();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        SomeClassToMock spyObject = SuperMock.spy(new SomeClassToMock());
+
+        SuperMock.when(spyObject).invokeRealMethod();
+
+        spyObject.method();
     }
 }
 
