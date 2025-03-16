@@ -3,6 +3,7 @@ package mock;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Field;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.objenesis.Objenesis;
@@ -10,10 +11,6 @@ import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
 
 public class Create {
-
-    public static <T> T mock(Class<T> classToMock) {
-        return mock(classToMock, DelegationStrategy.RETURN_DEFAULT);
-    }
 
     public static <T> T mock(Class<T> classToMock, DelegationStrategy delegationStrategy) {
         MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy));
@@ -39,7 +36,7 @@ public class Create {
             Class<? extends T> byteBuddy = new ByteBuddy()
                     .subclass(classToMock)
                     .method(ElementMatchers.named("method"))
-                    .intercept(MethodDelegation.to(MockContext.getLastMockInvocationHandler()))
+                    .intercept(InvocationHandlerAdapter.of(MockContext.getLastMockInvocationHandler()))
                     .make()
                     .load(classToMock.getClassLoader())
                     .getLoaded();
@@ -52,7 +49,6 @@ public class Create {
             throw new RuntimeException("Failed to create mock for class: " + classToMock.getName(), e);
         }
     }
-
     public static <T> T spy(T obj) {
         return spy(obj, DelegationStrategy.CALL_REAL_METHOD);
     }
@@ -64,7 +60,7 @@ public class Create {
             Class<? extends T> byteBuddy = new ByteBuddy()
                     .subclass((Class<T>) obj.getClass())
                     .method(ElementMatchers.named("methodReturningValue"))
-                    .intercept(MethodDelegation.to(MockContext.getLastMockInvocationHandler()))
+                    .intercept(InvocationHandlerAdapter.of(MockContext.getLastMockInvocationHandler()))
                     .make()
                     .load(obj.getClass().getClassLoader())
                     .getLoaded();
