@@ -1,4 +1,4 @@
-package mock;
+package mock.invocation;
 
 import java.lang.reflect.Method;
 
@@ -35,11 +35,19 @@ class InvocationConfig {
 
     }
 
-    Object[] getArgs() {
+    public Object[] getArgs() {
         return args;
     }
 
-    Method getMethod() {
+    public Method getMethod() {
         return method;
+    }
+
+    public Throwable getToThrow() {
+        return toThrow;
+    }
+
+    public Object getRetObj() {
+        return retObj;
     }
 }

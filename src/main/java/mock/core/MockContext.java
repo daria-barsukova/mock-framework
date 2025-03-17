@@ -1,4 +1,6 @@
-package mock;
+package mock.core;
+
+import mock.invocation.MockInvocationHandler;
 
 public class MockContext {
     private static MockInvocationHandler lastMockInvocationHandler;

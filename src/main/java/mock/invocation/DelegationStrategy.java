@@ -1,4 +1,4 @@
-package mock;
+package mock.invocation;
 
 public enum DelegationStrategy {
     RETURN_DEFAULT,

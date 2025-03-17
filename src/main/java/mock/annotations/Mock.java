@@ -1,4 +1,4 @@
-package mock;
+package mock.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
