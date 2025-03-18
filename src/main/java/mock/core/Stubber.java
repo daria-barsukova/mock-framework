@@ -1,4 +1,4 @@
-package mock;
+package mock.core;
 
 public class Stubber<T> {
 

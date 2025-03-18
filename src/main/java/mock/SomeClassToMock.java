@@ -8,4 +8,8 @@ public class SomeClassToMock {
     public String methodReturningValue() {
         return "Original result";
     }
+
+    public String someMethod(String str) {
+        return "Default";
+    }
 }

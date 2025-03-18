@@ -1,4 +1,7 @@
-package mock;
+package mock.core;
+
+import mock.annotations.MockAnnotation;
+import mock.invocation.DelegationStrategy;
 
 public class SuperMock {
 

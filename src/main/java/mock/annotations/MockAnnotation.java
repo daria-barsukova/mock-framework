@@ -1,6 +1,8 @@
-package mock;
+package mock.annotations;
 
 import java.lang.reflect.Field;
+
+import mock.core.SuperMock;
 
 public class MockAnnotation {
     public static void initMocks(Object instance) {
