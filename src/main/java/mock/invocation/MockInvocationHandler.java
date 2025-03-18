@@ -22,31 +22,26 @@ public class MockInvocationHandler implements InvocationHandler {
         this.lastArgs = args;
         System.out.println("Mocked method: " + method.getName());
 
-        switch (delegationStrategy) {
-            case RETURN_DEFAULT:
-                return getDefaultReturnValue(method.getReturnType());
-
-            case RETURN_CUSTOM:
-                for (InvocationConfig config : invocationConfigs) {
-                    if (config.getMethod().equals(method) && Arrays.deepEquals(config.getArgs(), args)) {
+        for (InvocationConfig config : invocationConfigs) {
+            if (config.getMethod().equals(method) && Arrays.deepEquals(config.getArgs(), args)) {
+                switch (config.getDelegationStrategy()) {
+                    case RETURN_CUSTOM -> {
                         return config.getRetObj();
                     }
-                }
-                return getDefaultReturnValue(method.getReturnType());
-
-            case CALL_REAL_METHOD:
-                return method.invoke(proxy, args);
-
-            case RETURN_THROW:
-                for (InvocationConfig config : invocationConfigs) {
-                    if (config.getMethod().equals(method) && Arrays.deepEquals(config.getArgs(), args)) {
-                        throw config.getToThrow();
+                    case RETURN_THROW -> {
+                        return config.getToThrow();
                     }
                 }
-                return null;
-
-            default:
-                throw new UnsupportedOperationException("Unknown delegation strategy: " + delegationStrategy);
+            }
+        }
+        switch (delegationStrategy) {
+            case CALL_REAL_METHOD -> {
+                return method.invoke(proxy, args);
+            }
+            case RETURN_DEFAULT -> {
+                return getDefaultReturnValue(method.getReturnType());
+            }
+            default -> throw new UnsupportedOperationException("Unknown delegation strategy: " + delegationStrategy);
         }
     }
 

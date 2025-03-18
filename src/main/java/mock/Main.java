@@ -9,6 +9,9 @@ public class Main {
         SuperMock.when(mockedClass.someMethod("string")).thenReturn("Mocked Result");
         System.out.println(mockedClass.someMethod("string"));
 
+        SuperMock.when(mockedClass.someMethod("string2")).thenReturn("Mocked Result2");
+        System.out.println(mockedClass.someMethod("string2"));
+
         SomeClassToMock anotherMockedClass = SuperMock.mock(SomeClassToMock.class);
         SuperMock.when(anotherMockedClass.methodReturningValue()).thenThrow(new RuntimeException("Exception from mock"));
 
@@ -19,6 +22,8 @@ public class Main {
         }
 
         System.out.println(mockedClass.someMethod("string"));
+
+        System.out.println(mockedClass.someMethod("string2"));
     }
 }
 

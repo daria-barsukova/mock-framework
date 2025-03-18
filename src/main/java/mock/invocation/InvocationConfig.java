@@ -50,4 +50,8 @@ class InvocationConfig {
     public Object getRetObj() {
         return retObj;
     }
+
+    public DelegationStrategy getDelegationStrategy() {
+        return delegationStrategy;
+    }
 }
