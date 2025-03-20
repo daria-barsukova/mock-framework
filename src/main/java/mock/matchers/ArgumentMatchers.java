@@ -2,6 +2,7 @@ package mock.matchers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ArgumentMatchers {
     private static final List<Matcher<?>> MATCHERS = new ArrayList<>();
@@ -13,6 +14,16 @@ public class ArgumentMatchers {
 
     public static <T> T any() {
         MATCHERS.add(new AnyMatcher<>());
+        return null;
+    }
+
+    public static <T> T matchesRegex(String regex) {
+        MATCHERS.add(new RegexMatcher(regex));
+        return null;
+    }
+
+    public static <T> T matchesPredicate(Predicate<T> predicate) {
+        MATCHERS.add(new PredicateMatcher<T>(predicate));
         return null;
     }
 

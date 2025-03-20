@@ -42,7 +42,7 @@ public class MockInvocationHandler implements InvocationHandler {
                         return config.getRetObj();
                     }
                     case RETURN_THROW -> {
-                        return config.getToThrow();
+                        throw config.getToThrow();
                     }
                 }
             }
