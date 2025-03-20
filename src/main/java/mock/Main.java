@@ -2,15 +2,16 @@ package mock;
 
 import mock.core.StaticStubber;
 import mock.core.SuperMock;
+import mock.matchers.ArgumentMatchers;
 
 public class Main {
     public static void main(String[] args) {
 
         SomeClassToMock mockedClass = SuperMock.mock(SomeClassToMock.class);
-        SuperMock.when(mockedClass.someMethod("string")).thenReturn("Mocked Result");
+        SuperMock.when(mockedClass.someMethod(ArgumentMatchers.eq("string"))).thenReturn("Mocked Result");
         System.out.println(mockedClass.someMethod("string"));
 
-        SuperMock.when(mockedClass.someMethod("string2")).thenReturn("Mocked Result2");
+        SuperMock.when(mockedClass.someMethod(ArgumentMatchers.any())).thenReturn("Mocked Result2");
         System.out.println(mockedClass.someMethod("string2"));
 
         SomeClassToMock anotherMockedClass = SuperMock.mock(SomeClassToMock.class);
