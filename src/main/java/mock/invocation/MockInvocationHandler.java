@@ -11,6 +11,7 @@ public class MockInvocationHandler implements InvocationHandler {
     private Method lastMethod = null;
     private Object[] lastArgs = null;
     private final DelegationStrategy delegationStrategy;
+    private boolean interceptStaticMethods = false;
 
     public MockInvocationHandler(DelegationStrategy delegationStrategy) {
         this.delegationStrategy = delegationStrategy;
@@ -20,9 +21,17 @@ public class MockInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         this.lastMethod = method;
         this.lastArgs = args;
-        System.out.println("Mocked method: " + method.getName());
+
+        if (interceptStaticMethods && java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
+            System.out.println("Mocked static method: " + method.getName());
+        } else {
+            System.out.println("Mocked method: " + method.getName());
+        }
 
         for (InvocationConfig config : invocationConfigs) {
+//            System.out.println("Checking stored config: " + config.getMethod().getName() +
+//                    ", Expected args: " + Arrays.toString(config.getArgs()) +
+//                    ", Stored return: " + config.getRetObj());
             if (config.getMethod().equals(method) && Arrays.deepEquals(config.getArgs(), args)) {
                 switch (config.getDelegationStrategy()) {
                     case RETURN_CUSTOM -> {
@@ -34,8 +43,12 @@ public class MockInvocationHandler implements InvocationHandler {
                 }
             }
         }
+
         switch (delegationStrategy) {
             case CALL_REAL_METHOD -> {
+                if (interceptStaticMethods && java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
+                    throw new UnsupportedOperationException("Cannot call real method on static mocks.");
+                }
                 return method.invoke(proxy, args);
             }
             case RETURN_DEFAULT -> {
@@ -81,7 +94,16 @@ public class MockInvocationHandler implements InvocationHandler {
     }
 
     public void setThrowable(Throwable throwable) {
-        invocationConfigs.removeIf(invocationConfig -> invocationConfig.getMethod().equals(lastMethod) && Arrays.deepEquals(invocationConfig.getArgs(), lastArgs));
+        invocationConfigs.removeIf(invocationConfig -> invocationConfig.getMethod().equals(lastMethod) &&
+                Arrays.deepEquals(invocationConfig.getArgs(), lastArgs));
         invocationConfigs.add(new InvocationConfig(lastMethod, lastArgs, throwable));
+    }
+
+    public void setInterceptStaticMethods(boolean intercept) {
+        this.interceptStaticMethods = intercept;
+    }
+
+    public boolean isInterceptStaticMethods() {
+        return interceptStaticMethods;
     }
 }

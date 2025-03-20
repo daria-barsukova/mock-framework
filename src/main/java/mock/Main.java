@@ -1,5 +1,6 @@
 package mock;
 
+import mock.core.StaticStubber;
 import mock.core.SuperMock;
 
 public class Main {
@@ -24,6 +25,16 @@ public class Main {
         System.out.println(mockedClass.someMethod("string"));
 
         System.out.println(mockedClass.someMethod("string2"));
+
+        try (StaticStubber<SomeClassToMock> ignored = SuperMock.mockStatic(SomeClassToMock.class)) {
+            SuperMock.when(SomeClassToMock.staticMethod("string")).thenReturn("Mocked Static Result");
+
+            String result = SomeClassToMock.staticMethod("string");
+            System.out.println(result);
+        }
+
+        String originalResult = SomeClassToMock.staticMethod("string");
+        System.out.println(originalResult);
     }
 }
 

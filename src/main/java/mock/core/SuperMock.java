@@ -2,6 +2,7 @@ package mock.core;
 
 import mock.annotations.MockAnnotation;
 import mock.invocation.DelegationStrategy;
+import mock.invocation.MockInvocationHandler;
 
 public class SuperMock {
 
@@ -22,6 +23,14 @@ public class SuperMock {
     }
 
     public static <T> Stubber<T> when(T obj) {
-        return new Stubber<>();
+        MockInvocationHandler handler = MockContext.getLastMockInvocationHandler();
+        if (handler == null) {
+            throw new IllegalStateException("No mock handler found. Ensure mockStatic() was called before when()");
+        }
+        return new Stubber<>(handler);
+    }
+
+    public static StaticStubber mockStatic(Class<?> clazz) {
+        return Create.mockStatic(clazz);
     }
 }

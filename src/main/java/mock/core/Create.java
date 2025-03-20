@@ -1,16 +1,28 @@
 package mock.core;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Field;
+import java.util.List;
 
+import mock.invocation.StaticMethodHandler;
 import mock.invocation.DelegationStrategy;
 import mock.invocation.MockInvocationHandler;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.objenesis.Objenesis;
 import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
+import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 
 public class Create {
 
@@ -51,6 +63,7 @@ public class Create {
             throw new RuntimeException("Failed to create mock for class: " + classToMock.getName(), e);
         }
     }
+
     public static <T> T spy(T obj) {
         return spy(obj, DelegationStrategy.CALL_REAL_METHOD);
     }
@@ -96,5 +109,40 @@ public class Create {
                 throw new RuntimeException("Failed to copy field: " + field.getName(), e);
             }
         }
+    }
+
+    public static <T> StaticStubber<T> mockStatic(Class<T> clazz) {
+        MockInvocationHandler staticHandler = new MockInvocationHandler(DelegationStrategy.RETURN_DEFAULT);
+        MockContext.setStaticMockHandler(clazz, staticHandler);
+        MockContext.setLastMockInvocationHandler(staticHandler);
+
+        System.out.println("Static mock handler registered successfully for " + clazz.getName());
+
+        StaticMethodHandler.lastMockInvocationHandler = staticHandler;
+
+        ByteBuddyAgent.install();
+        List<Method> staticMethods = getStaticMethodsOfClass(clazz);
+
+        ByteBuddy byteBuddy = new ByteBuddy();
+        DynamicType.Builder<T> builder = byteBuddy.redefine(clazz);
+
+        for (Method method : staticMethods) {
+            builder = builder.visit(Advice.to(StaticMethodHandler.class).on(ElementMatchers.is(method)));
+        }
+
+        try (DynamicType.Unloaded<T> made = builder.make()) {
+            made.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+        }
+
+        MockContext.setStaticIntercept(true, clazz);
+        System.out.println("Static intercept enabled for: " + clazz.getName());
+
+        return new StaticStubber<>(clazz, staticHandler);
+    }
+
+    private static <T> List<Method> getStaticMethodsOfClass(Class<T> tClass) {
+        return Arrays.stream(tClass.getDeclaredMethods())
+                .filter(method -> Modifier.isStatic(method.getModifiers()))
+                .collect(Collectors.toList());
     }
 }
