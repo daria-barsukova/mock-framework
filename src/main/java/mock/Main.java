@@ -28,12 +28,23 @@ public class Main {
         System.out.println(mockedClass.someMethod("string2"));
 
         try (StaticStubber<SomeClassToMock> ignored = SuperMock.mockStatic(SomeClassToMock.class)) {
-            SuperMock.when(SomeClassToMock.staticMethod("string")).thenReturn("Mocked Static Result");
+            SuperMock.when(SomeClassToMock.staticMethod(ArgumentMatchers.eq("string"))).thenReturn("Mocked Static Result");
 
             String result = SomeClassToMock.staticMethod("string");
             System.out.println(result);
         }
+        try (StaticStubber<SomeClassToMock> ignored = SuperMock.mockStatic(SomeClassToMock.class)) {
+            SuperMock.when(SomeClassToMock.staticMethod(ArgumentMatchers.any()))
+                    .thenThrow(new RuntimeException("Mocked exceptionyyyyy"));
 
+            try {
+                SomeClassToMock.staticMethod("string");
+            } catch (Exception e) {
+                System.out.println("Caught exception: " + e.getMessage());
+            }
+
+            System.out.println("Program continues execution...");
+        }
         String originalResult = SomeClassToMock.staticMethod("string");
         System.out.println(originalResult);
     }

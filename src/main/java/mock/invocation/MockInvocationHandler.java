@@ -5,11 +5,17 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
+import mock.core.MockContext;
 import mock.matchers.ArgumentMatchers;
 import mock.matchers.Matcher;
+import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Origin;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
 
-public class MockInvocationHandler implements InvocationHandler {
+public class MockInvocationHandler {
     private final List<InvocationConfig> invocationConfigs = new ArrayList<>();
     private Method lastMethod = null;
     private List<Matcher<?>> lastMatchers = null;
@@ -20,11 +26,12 @@ public class MockInvocationHandler implements InvocationHandler {
         this.delegationStrategy = delegationStrategy;
     }
 
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    @RuntimeType
+    public Object invoke(@SuperCall Callable<?> zuper, @Origin Method method, @AllArguments Object[] args) throws Throwable {
         this.lastMethod = method;
         this.lastMatchers = ArgumentMatchers.captureMatchers();
         System.out.println(lastMatchers);
+        MockContext.setLastMockInvocationHandler(this);
 
         if (interceptStaticMethods && java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
             System.out.println("Mocked static method: " + method.getName());
@@ -38,6 +45,9 @@ public class MockInvocationHandler implements InvocationHandler {
 //                    ", Stored return: " + config.getRetObj());
             if (config.getMethod().equals(method) && matchArgs(args, config.getMatchers())) {
                 switch (config.getDelegationStrategy()) {
+                    case CALL_REAL_METHOD -> {
+                        return zuper.call();
+                    }
                     case RETURN_CUSTOM -> {
                         return config.getRetObj();
                     }
@@ -53,7 +63,7 @@ public class MockInvocationHandler implements InvocationHandler {
                 if (interceptStaticMethods && java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
                     throw new UnsupportedOperationException("Cannot call real method on static mocks.");
                 }
-                return method.invoke(proxy, args);
+                return zuper.call();
             }
             case RETURN_DEFAULT -> {
                 return getDefaultReturnValue(method.getReturnType());
