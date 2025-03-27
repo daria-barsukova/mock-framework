@@ -1,8 +1,6 @@
 package mock;
-import mock.Calculator;
 import mock.core.SuperMock;
 import mock.matchers.ArgumentMatchers;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 

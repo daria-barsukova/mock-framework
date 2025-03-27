@@ -42,7 +42,7 @@ public class StaticMethodHandler {
 //        System.out.println("Intercepted static method: " + method.getName());
 
         if (lastMockInvocationHandler != null) {
-            value = lastMockInvocationHandler.invoke(null, method, objects);
+            value = lastMockInvocationHandler.handleInvocation(null, method, objects);
             System.out.println("Returning mocked value: " + value);
         } else {
             System.out.println("No MockInvocationHandler found");

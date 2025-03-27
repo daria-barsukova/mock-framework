@@ -15,19 +15,46 @@ import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 
-public class MockInvocationHandler {
+public class MockInvocationHandler implements InvocationHandler {
     private final List<InvocationConfig> invocationConfigs = new ArrayList<>();
     private Method lastMethod = null;
     private List<Matcher<?>> lastMatchers = null;
     private final DelegationStrategy delegationStrategy;
     private boolean interceptStaticMethods = false;
+    private final boolean isInterface;
 
-    public MockInvocationHandler(DelegationStrategy delegationStrategy) {
+    public MockInvocationHandler(DelegationStrategy delegationStrategy, boolean isInterface) {
         this.delegationStrategy = delegationStrategy;
+        this.isInterface = isInterface;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (!isInterface) {
+            return handleInvocation((Callable<?>) proxy, method, args);
+        }
+        this.lastMethod = method;
+        this.lastMatchers = ArgumentMatchers.captureMatchers();
+        System.out.println(lastMatchers);
+
+        System.out.println("Mocked method: " + method.getName());
+
+        for (InvocationConfig config : invocationConfigs) {
+            if (config.getMethod().equals(method) && matchArgs(args, config.getMatchers())) {
+                switch (config.getDelegationStrategy()) {
+                    case RETURN_CUSTOM -> {
+                        return config.getRetObj();
+                    }
+                    case RETURN_THROW -> throw config.getToThrow();
+                }
+            }
+        }
+
+        return getDefaultReturnValue(method.getReturnType());
     }
 
     @RuntimeType
-    public Object invoke(@SuperCall Callable<?> zuper, @Origin Method method, @AllArguments Object[] args) throws Throwable {
+    public Object handleInvocation(@SuperCall Callable<?> zuper, @Origin Method method, @AllArguments Object[] args) throws Throwable {
         this.lastMethod = method;
         this.lastMatchers = ArgumentMatchers.captureMatchers();
         System.out.println(lastMatchers);
@@ -51,9 +78,7 @@ public class MockInvocationHandler {
                     case RETURN_CUSTOM -> {
                         return config.getRetObj();
                     }
-                    case RETURN_THROW -> {
-                        throw config.getToThrow();
-                    }
+                    case RETURN_THROW -> throw config.getToThrow();
                 }
             }
         }

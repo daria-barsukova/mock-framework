@@ -27,29 +27,26 @@ import static mock.invocation.DelegationStrategy.RETURN_DEFAULT;
 public class Create {
 
     public static <T> T mock(Class<T> classToMock, DelegationStrategy delegationStrategy) {
-        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy));
-
         if (classToMock.isInterface()) {
-             return null;
+            return mockInterface(classToMock, delegationStrategy);
         } else {
-
-            return mockObject(classToMock);
+            return mockObject(classToMock, delegationStrategy);
         }
-
-
     }
-//    @SuppressWarnings("unchecked")
-//    private static <T> T mockInterface(Class<T> classToMock) {
-//        return (T) Proxy.newProxyInstance(
-//                classToMock.getClassLoader(),
-//                new Class<?>[]{classToMock},
-//                MockContext.getLastMockInvocationHandler()
-//        );
-//    }
 
+    @SuppressWarnings("unchecked")
+    private static <T> T mockInterface(Class<T> classToMock, DelegationStrategy delegationStrategy) {
+        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, true));
 
-    private static <T> T mockObject(Class<T> classToMock) {
-        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(RETURN_DEFAULT));
+        return (T) Proxy.newProxyInstance(
+                classToMock.getClassLoader(),
+                new Class<?>[]{classToMock},
+                MockContext.getLastMockInvocationHandler()
+        );
+    }
+
+    private static <T> T mockObject(Class<T> classToMock, DelegationStrategy delegationStrategy) {
+        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
 
         Class<? extends T> byteBuddy = new ByteBuddy()
                 .subclass(classToMock)
@@ -69,7 +66,7 @@ public class Create {
     }
 
     public static <T> T spy(T obj, DelegationStrategy delegationStrategy) {
-        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy));
+        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
 
 
         Class<? extends T> byteBuddy = new ByteBuddy()
@@ -109,7 +106,7 @@ public class Create {
     }
 
     public static <T> StaticStubber<T> mockStatic(Class<T> clazz) {
-        MockInvocationHandler staticHandler = new MockInvocationHandler(RETURN_DEFAULT);
+        MockInvocationHandler staticHandler = new MockInvocationHandler(RETURN_DEFAULT, false);
         MockContext.setStaticMockHandler(clazz, staticHandler);
         MockContext.setLastMockInvocationHandler(staticHandler);
 
