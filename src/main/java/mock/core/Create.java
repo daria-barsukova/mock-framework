@@ -9,7 +9,6 @@ import mock.invocation.MockInvocationHandler;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.objenesis.Objenesis;
@@ -20,9 +19,6 @@ import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static mock.invocation.DelegationStrategy.RETURN_DEFAULT;
-
 
 public class Create {
 
@@ -68,7 +64,6 @@ public class Create {
     public static <T> T spy(T obj, DelegationStrategy delegationStrategy) {
         MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
 
-
         Class<? extends T> byteBuddy = new ByteBuddy()
                 .subclass((Class<T>) obj.getClass())
                 .method(ElementMatchers.any())
@@ -80,7 +75,6 @@ public class Create {
         Objenesis objenesis = new ObjenesisStd();
         ObjectInstantiator<? extends T> thingyInstantiator = objenesis.getInstantiatorOf(byteBuddy);
         T instance = thingyInstantiator.newInstance();
-
 
         copyFields(obj, instance);
         return instance;
@@ -106,7 +100,7 @@ public class Create {
     }
 
     public static <T> StaticStubber<T> mockStatic(Class<T> clazz) {
-        MockInvocationHandler staticHandler = new MockInvocationHandler(RETURN_DEFAULT, false);
+        MockInvocationHandler staticHandler = new MockInvocationHandler(DelegationStrategy.RETURN_DEFAULT, false);
         MockContext.setStaticMockHandler(clazz, staticHandler);
         MockContext.setLastMockInvocationHandler(staticHandler);
 

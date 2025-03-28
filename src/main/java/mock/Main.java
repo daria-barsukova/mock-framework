@@ -49,7 +49,3 @@ public class Main {
         System.out.println(originalResult);
     }
 }
-
-interface SomeInterface {
-    void doSmth();
-}
