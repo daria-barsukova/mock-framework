@@ -36,9 +36,9 @@ public class MockStaticClassTest {
     @Test
     void testMockStaticMethodThenThrow() {
         when(MathUtils.divide(ArgumentMatchers.eq(10), ArgumentMatchers.eq(1)))
-                .thenThrow(new ArithmeticException("Cannot divide by zero"));
+                .thenThrow(new RuntimeException("Cannot perform operation"));
 
-        assertThrows(ArithmeticException.class, () -> MathUtils.divide(10, 1));
+        assertThrows(RuntimeException.class, () -> MathUtils.divide(10, 1));
 
         when(MathUtils.divide(ArgumentMatchers.eq(10), ArgumentMatchers.eq(2))).thenReturn(10);
 
