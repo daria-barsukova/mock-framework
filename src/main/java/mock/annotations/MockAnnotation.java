@@ -6,6 +6,7 @@ import mock.core.SuperMock;
 
 public class MockAnnotation {
     public static void initMocks(Object instance) {
+
         Field[] fields = instance.getClass().getDeclaredFields();
 
         for (Field field : fields) {

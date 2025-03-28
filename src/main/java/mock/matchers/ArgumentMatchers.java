@@ -17,6 +17,11 @@ public class ArgumentMatchers {
         return null;
     }
 
+    public static int anyInt() {
+        MATCHERS.add(new AnyMatcher<>());
+        return 0;
+    }
+
     public static <T> T matchesRegex(String regex) {
         MATCHERS.add(new RegexMatcher(regex));
         return null;
@@ -29,7 +34,6 @@ public class ArgumentMatchers {
 
     public static List<Matcher<?>> captureMatchers() {
         List<Matcher<?>> matchers = new ArrayList<>(MATCHERS);
-        System.out.println("Captured matchers: " + matchers);
         MATCHERS.clear();
         return matchers;
     }

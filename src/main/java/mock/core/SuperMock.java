@@ -10,10 +10,6 @@ public class SuperMock {
         return Create.mock(classToMock, DelegationStrategy.RETURN_DEFAULT);
     }
 
-    public static <T> T spy(Class<T> classToSpy) {
-        return Create.mock(classToSpy, DelegationStrategy.CALL_REAL_METHOD);
-    }
-
     public static <T> T spy(T obj) {
         return Create.spy(obj);
     }

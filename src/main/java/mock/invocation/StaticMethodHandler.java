@@ -14,10 +14,9 @@ import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 public class StaticMethodHandler {
-    public static MockInvocationHandler lastMockInvocationHandler;
 
+    public static MockInvocationHandler lastMockInvocationHandler;
     public static final List<Object> lastArguments = new ArrayList<>();
-    public static final List<Method> calledMethod = new ArrayList<>();
     public static Method lastCalledMethod = null;
 
     public StaticMethodHandler() {
@@ -39,13 +38,9 @@ public class StaticMethodHandler {
             @Advice.Origin Method method,
             @Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value
     ) throws Throwable {
-//        System.out.println("Intercepted static method: " + method.getName());
 
         if (lastMockInvocationHandler != null) {
-            value = lastMockInvocationHandler.invoke(null, method, objects);
-            System.out.println("Returning mocked value: " + value);
-        } else {
-            System.out.println("No MockInvocationHandler found");
+            return lastMockInvocationHandler.handleInvocation(null, method, objects);
         }
 
         return value;

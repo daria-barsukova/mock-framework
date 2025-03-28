@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MockContext {
+
     private static final Map<Class<?>, MockInvocationHandler> staticMocks = new HashMap<>();
     private static MockInvocationHandler lastMockInvocationHandler;
 
@@ -19,27 +20,36 @@ public class MockContext {
     }
 
     public static void setStaticMockHandler(Class<?> clazz, MockInvocationHandler handler) {
+        if (clazz == null || handler == null) {
+            throw new IllegalArgumentException("Class and handler must not be null");
+        }
         staticMocks.put(clazz, handler);
     }
 
     public static MockInvocationHandler getStaticMockHandler(Class<?> clazz) {
+        if (clazz == null) {
+            throw new IllegalArgumentException("Class must not be null");
+        }
         return staticMocks.get(clazz);
     }
 
     public static void removeStaticMock(Class<?> clazz) {
-        if (staticMocks.remove(clazz) != null) {
-            System.out.println("Static mock removed for: " + clazz.getName());
+        if (clazz == null) {
+            throw new IllegalArgumentException("Class must not be null");
         }
+        staticMocks.remove(clazz);
         StaticMethodHandler.lastMockInvocationHandler = null;
     }
 
     public static void setStaticIntercept(boolean intercept, Class<?> clazz) {
+        if (clazz == null) {
+            throw new IllegalArgumentException("Class must not be null");
+        }
         MockInvocationHandler handler = getStaticMockHandler(clazz);
         if (handler != null) {
-            System.out.println("Setting static intercept for: " + clazz.getName() + " to " + intercept);
             handler.setInterceptStaticMethods(intercept);
         } else {
-            System.out.println("No handler found for: " + clazz.getName() + ". Ensure mockStatic() was called before");
+            throw new IllegalStateException("No handler found for: " + clazz.getName() + ". Ensure mockStatic() was called before");
         }
     }
 }
