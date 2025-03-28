@@ -3,6 +3,7 @@ package mock.core;
 import mock.invocation.MockInvocationHandler;
 
 public class Stubber<T> {
+
     private final MockInvocationHandler handler;
 
     public Stubber(MockInvocationHandler handler) {

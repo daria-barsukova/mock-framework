@@ -12,30 +12,12 @@ class InvocationConfig {
     private final DelegationStrategy delegationStrategy;
     private final Throwable toThrow;
 
-    InvocationConfig(Method method, List<Matcher<?>> matchers, Object retObj) {
-        this.matchers = matchers;
-        this.method = method;
-        this.retObj = retObj;
-        this.delegationStrategy = DelegationStrategy.RETURN_CUSTOM;
-        this.toThrow = null;
-    }
-
-    InvocationConfig(Method method, List<Matcher<?>> matchers) {
-        this.matchers = matchers;
-        this.method = method;
-        this.retObj = null;
-        this.delegationStrategy = DelegationStrategy.CALL_REAL_METHOD;
-        this.toThrow = null;
-
-    }
-
-    InvocationConfig(Method method, List<Matcher<?>> matchers, Throwable toThrow) {
-        this.matchers = matchers;
-        this.method = method;
-        this.retObj = null;
-        this.delegationStrategy = DelegationStrategy.RETURN_THROW;
-        this.toThrow = toThrow;
-
+    private InvocationConfig(Builder builder) {
+        this.matchers = builder.matchers;
+        this.method = builder.method;
+        this.retObj = builder.retObj;
+        this.delegationStrategy = builder.delegationStrategy;
+        this.toThrow = builder.toThrow;
     }
 
     public List<Matcher<?>> getMatchers() {
@@ -56,5 +38,34 @@ class InvocationConfig {
 
     public DelegationStrategy getDelegationStrategy() {
         return delegationStrategy;
+    }
+
+    public static class Builder {
+        private final Method method;
+        private final List<Matcher<?>> matchers;
+        private Object retObj = null;
+        private DelegationStrategy delegationStrategy = DelegationStrategy.CALL_REAL_METHOD;
+        private Throwable toThrow = null;
+
+        public Builder(Method method, List<Matcher<?>> matchers) {
+            this.method = method;
+            this.matchers = matchers;
+        }
+
+        public Builder returnObject(Object retObj) {
+            this.retObj = retObj;
+            this.delegationStrategy = DelegationStrategy.RETURN_CUSTOM;
+            return this;
+        }
+
+        public Builder throwException(Throwable toThrow) {
+            this.toThrow = toThrow;
+            this.delegationStrategy = DelegationStrategy.RETURN_THROW;
+            return this;
+        }
+
+        public InvocationConfig build() {
+            return new InvocationConfig(this);
+        }
     }
 }

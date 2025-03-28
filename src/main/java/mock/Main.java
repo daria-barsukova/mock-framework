@@ -35,7 +35,7 @@ public class Main {
         }
         try (StaticStubber<SomeClassToMock> ignored = SuperMock.mockStatic(SomeClassToMock.class)) {
             SuperMock.when(SomeClassToMock.staticMethod(ArgumentMatchers.any()))
-                    .thenThrow(new RuntimeException("Mocked exceptionyyyyy"));
+                    .thenThrow(new RuntimeException("Mocked exception"));
 
             try {
                 SomeClassToMock.staticMethod("string");
@@ -43,7 +43,6 @@ public class Main {
                 System.out.println("Caught exception: " + e.getMessage());
             }
 
-            System.out.println("Program continues execution...");
         }
         String originalResult = SomeClassToMock.staticMethod("string");
         System.out.println(originalResult);

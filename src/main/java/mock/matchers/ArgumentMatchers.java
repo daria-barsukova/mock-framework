@@ -34,7 +34,6 @@ public class ArgumentMatchers {
 
     public static List<Matcher<?>> captureMatchers() {
         List<Matcher<?>> matchers = new ArrayList<>(MATCHERS);
-        System.out.println("Captured matchers: " + matchers);
         MATCHERS.clear();
         return matchers;
     }

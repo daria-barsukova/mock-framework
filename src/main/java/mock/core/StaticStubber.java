@@ -3,6 +3,7 @@ package mock.core;
 import mock.invocation.MockInvocationHandler;
 
 public class StaticStubber<T> implements AutoCloseable {
+
     private final Class<T> originalClass;
     private final MockInvocationHandler handler;
 
@@ -22,7 +23,6 @@ public class StaticStubber<T> implements AutoCloseable {
     private void restoreOriginalClass() {
         MockContext.setStaticIntercept(false, originalClass);
         MockContext.removeStaticMock(originalClass);
-
     }
 
     @Override

@@ -23,38 +23,50 @@ import java.util.stream.Collectors;
 public class Create {
 
     public static <T> T mock(Class<T> classToMock, DelegationStrategy delegationStrategy) {
-        if (classToMock.isInterface()) {
-            return mockInterface(classToMock, delegationStrategy);
-        } else {
-            return mockObject(classToMock, delegationStrategy);
+        try {
+            if (classToMock.isInterface()) {
+                return mockInterface(classToMock, delegationStrategy);
+            } else {
+                return mockObject(classToMock, delegationStrategy);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create mock for class: " + classToMock.getName(), e);
         }
     }
 
     @SuppressWarnings("unchecked")
     private static <T> T mockInterface(Class<T> classToMock, DelegationStrategy delegationStrategy) {
-        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, true));
+        try {
+            MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, true));
 
-        return (T) Proxy.newProxyInstance(
-                classToMock.getClassLoader(),
-                new Class<?>[]{classToMock},
-                MockContext.getLastMockInvocationHandler()
-        );
+            return (T) Proxy.newProxyInstance(
+                    classToMock.getClassLoader(),
+                    new Class<?>[]{classToMock},
+                    MockContext.getLastMockInvocationHandler()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create proxy for interface: " + classToMock.getName(), e);
+        }
     }
 
     private static <T> T mockObject(Class<T> classToMock, DelegationStrategy delegationStrategy) {
-        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
+        try {
+            MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
 
-        Class<? extends T> byteBuddy = new ByteBuddy()
-                .subclass(classToMock)
-                .method(ElementMatchers.any())
-                .intercept(MethodDelegation.to(MockContext.getLastMockInvocationHandler()))
-                .make()
-                .load(ClassLoader.getSystemClassLoader())
-                .getLoaded();
+            Class<? extends T> byteBuddy = new ByteBuddy()
+                    .subclass(classToMock)
+                    .method(ElementMatchers.any())
+                    .intercept(MethodDelegation.to(MockContext.getLastMockInvocationHandler()))
+                    .make()
+                    .load(ClassLoader.getSystemClassLoader())
+                    .getLoaded();
 
-        Objenesis objenesis = new ObjenesisStd();
-        ObjectInstantiator<? extends T> thingyInstantiator = objenesis.getInstantiatorOf(byteBuddy);
-        return thingyInstantiator.newInstance();
+            Objenesis objenesis = new ObjenesisStd();
+            ObjectInstantiator<? extends T> thingyInstantiator = objenesis.getInstantiatorOf(byteBuddy);
+            return thingyInstantiator.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create mock object for class: " + classToMock.getName(), e);
+        }
     }
 
     public static <T> T spy(T obj) {
@@ -62,23 +74,26 @@ public class Create {
     }
 
     public static <T> T spy(T obj, DelegationStrategy delegationStrategy) {
-        MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
+        try {
+            MockContext.setLastMockInvocationHandler(new MockInvocationHandler(delegationStrategy, false));
 
-        Class<? extends T> byteBuddy = new ByteBuddy()
-                .subclass((Class<T>) obj.getClass())
-                .method(ElementMatchers.any())
-                .intercept(MethodDelegation.to(MockContext.getLastMockInvocationHandler()))
-                .make()
-                .load(ClassLoader.getSystemClassLoader())
-                .getLoaded();
+            Class<? extends T> byteBuddy = new ByteBuddy()
+                    .subclass((Class<T>) obj.getClass())
+                    .method(ElementMatchers.any())
+                    .intercept(MethodDelegation.to(MockContext.getLastMockInvocationHandler()))
+                    .make()
+                    .load(ClassLoader.getSystemClassLoader())
+                    .getLoaded();
 
-        Objenesis objenesis = new ObjenesisStd();
-        ObjectInstantiator<? extends T> thingyInstantiator = objenesis.getInstantiatorOf(byteBuddy);
-        T instance = thingyInstantiator.newInstance();
+            Objenesis objenesis = new ObjenesisStd();
+            ObjectInstantiator<? extends T> thingyInstantiator = objenesis.getInstantiatorOf(byteBuddy);
+            T instance = thingyInstantiator.newInstance();
 
-        copyFields(obj, instance);
-        return instance;
-
+            copyFields(obj, instance);
+            return instance;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create spy for object of class: " + obj.getClass().getName(), e);
+        }
     }
 
     private static <T> void copyFields(T source, T target) {
@@ -100,37 +115,41 @@ public class Create {
     }
 
     public static <T> StaticStubber<T> mockStatic(Class<T> clazz) {
-        MockInvocationHandler staticHandler = new MockInvocationHandler(DelegationStrategy.RETURN_DEFAULT, false);
-        MockContext.setStaticMockHandler(clazz, staticHandler);
-        MockContext.setLastMockInvocationHandler(staticHandler);
+        try {
+            MockInvocationHandler staticHandler = new MockInvocationHandler(DelegationStrategy.RETURN_DEFAULT, false);
+            MockContext.setStaticMockHandler(clazz, staticHandler);
+            MockContext.setLastMockInvocationHandler(staticHandler);
 
-        System.out.println("Static mock handler registered successfully for " + clazz.getName());
+            StaticMethodHandler.lastMockInvocationHandler = staticHandler;
 
-        StaticMethodHandler.lastMockInvocationHandler = staticHandler;
+            ByteBuddyAgent.install();
+            List<Method> staticMethods = getStaticMethodsOfClass(clazz);
 
-        ByteBuddyAgent.install();
-        List<Method> staticMethods = getStaticMethodsOfClass(clazz);
+            ByteBuddy byteBuddy = new ByteBuddy();
+            DynamicType.Builder<T> builder = byteBuddy.redefine(clazz);
 
-        ByteBuddy byteBuddy = new ByteBuddy();
-        DynamicType.Builder<T> builder = byteBuddy.redefine(clazz);
+            for (Method method : staticMethods) {
+                builder = builder.visit(Advice.to(StaticMethodHandler.class).on(ElementMatchers.is(method)));
+            }
 
-        for (Method method : staticMethods) {
-            builder = builder.visit(Advice.to(StaticMethodHandler.class).on(ElementMatchers.is(method)));
+            try (DynamicType.Unloaded<T> made = builder.make()) {
+                made.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+            }
+
+            MockContext.setStaticIntercept(true, clazz);
+            return new StaticStubber<>(clazz, staticHandler);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create static mock for class: " + clazz.getName(), e);
         }
-
-        try (DynamicType.Unloaded<T> made = builder.make()) {
-            made.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
-        }
-
-        MockContext.setStaticIntercept(true, clazz);
-        System.out.println("Static intercept enabled for: " + clazz.getName());
-
-        return new StaticStubber<>(clazz, staticHandler);
     }
 
     private static <T> List<Method> getStaticMethodsOfClass(Class<T> tClass) {
-        return Arrays.stream(tClass.getDeclaredMethods())
-                .filter(method -> Modifier.isStatic(method.getModifiers()))
-                .collect(Collectors.toList());
+        try {
+            return Arrays.stream(tClass.getDeclaredMethods())
+                    .filter(method -> Modifier.isStatic(method.getModifiers()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to retrieve static methods for class: " + tClass.getName(), e);
+        }
     }
 }
