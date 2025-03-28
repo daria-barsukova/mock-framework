@@ -40,7 +40,7 @@ public class StaticMethodHandler {
     ) throws Throwable {
 
         if (lastMockInvocationHandler != null) {
-            return lastMockInvocationHandler.handleInvocation(null, method, objects);
+            value = lastMockInvocationHandler.handleInvocation(null, method, objects);
         }
 
         return value;
